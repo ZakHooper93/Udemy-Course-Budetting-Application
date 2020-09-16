@@ -18,12 +18,40 @@ var budgetController = (function () {
     //An array would be the ideal data structure for the objects created by the above function constructors.
     var data = {
         allItems: {
-            expense: [],
-            income: [],
+            exp: [],
+            inc: [],
         },
         totals: {
-            expense: 0,
-            income: 0,
+            exp: 0,
+            inc: 0,
+        },
+    };
+
+    return {
+        addItem: function (type, des, val) {
+            var newItem;
+            //Create a new unique ID for each entry. This particular declaration ensures no duplicates are created when items are removed from the array, which may be the case if we based ID's purely
+            //on the array length.
+            if (data.allItems[type].length > 0) {
+                ID = data.allItems[type][data.allItems[type].length - 1].id + 1;
+            } else {
+                ID = 0;
+            }
+            //Create a new instance based on the input type + or - in the UI.
+            if (type === "exp") {
+                newItem = new Expense(ID, des, val);
+            } else if (type === "inc") {
+                newItem = new Income(ID, des, val);
+            }
+
+            //Push that new instance into the appropriate array, inside of the "data" object.
+            data.allItems[type].push(newItem);
+
+            //Return the new item.
+            return newItem;
+        },
+        testing: function () {
+            console.log(data);
         },
     };
 })();
@@ -72,10 +100,11 @@ var controller = (function (budgetCtrl, UICtrl) {
 
     //ctrlAddItem function adds the item in the input field onto the budgetting app.
     var ctrlAddItem = function () {
+        var input, newItem;
         // 1. Get the field input data.
         var input = UICtrl.getinput();
         // 2. Add the item to the budget controller.
-
+        var newItem = budgetController.addItem(input.type, input.desciption, input.value);
         // 3. Add the item to the UI.
 
         // 4. Calculate the budget.
