@@ -1,6 +1,31 @@
 //BUDGET CONTROLLER
 var budgetController = (function () {
-    //Some Code
+    //Making a function constructor for the future objects that will be created when a budget entry is made by the user. This one is for expenses.
+    var Expense = function (id, desciption, value) {
+        this.id = id;
+        this.desciption = desciption;
+        this.value = value;
+    };
+
+    //Making a function constructor for the future objects that will be created when a budget entry is made by the user. This one is for incomes.
+    var Income = function (id, desciption, value) {
+        this.id = id;
+        this.desciption = desciption;
+        this.value = value;
+    };
+
+    //Instead of making many variables to keep track of each...well, variable, it's better to store them all in one object, just like with the DOMstrings.
+    //An array would be the ideal data structure for the objects created by the above function constructors.
+    var data = {
+        allItems: {
+            expense: [],
+            income: [],
+        },
+        totals: {
+            expense: 0,
+            income: 0,
+        },
+    };
 })();
 
 //UI CONTROLLER
@@ -58,11 +83,11 @@ var controller = (function (budgetCtrl, UICtrl) {
         // 5. Display the budget on the UI.
     };
     return {
-        init: function() {
+        init: function () {
             console.log("Application has started.");
             setupEventListeners();
-        }
-    }
+        },
+    };
 })(budgetController, UIController); //Passing the two modules into the IIFE so they can be used as arguments on the inner functions.
 
 //Initialisation function to activate the data input fields event listeners. Keeping them all within one function helps keep the code tidier.
