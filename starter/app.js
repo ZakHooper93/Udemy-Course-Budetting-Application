@@ -73,7 +73,7 @@ var UIController = (function () {
             return {
                 type: document.querySelector(DOMstrings.inputType).value, //Value will be inc for income, or exp for expense.
                 description: document.querySelector(DOMstrings.inputDescription).value, //Input for description of whatever expense/income.
-                value: document.querySelector(DOMstrings.inputValue).value, //The actual monetary value of the expense/income.
+                value: parseFloat(document.querySelector(DOMstrings.inputValue).value), //The actual monetary value of the expense/income.
             };
         },
 
@@ -136,29 +136,39 @@ var controller = (function (budgetCtrl, UICtrl) {
         });
     };
 
+    var updateBudget = function () {
+        // 1. Calculate the budget.
+        // 2. Returns the budget
+        // 3. Display the budget on the UI.
+    };
+
     //ctrlAddItem function adds the item in the input field onto the budgetting app.
     var ctrlAddItem = function () {
         var input, newItem;
         // 1. Get the field input data.
         var input = UICtrl.getinput();
-        // 2. Add the item to the budget controller.
-        var newItem = budgetController.addItem(input.type, input.description, input.value);
-        // 3. Add the item to the UI.
-        UICtrl.addListItem(newItem, input.type);
-        // 4.Clear the fields.
-        UICtrl.clearFields();
-        // 5. Calculate the budget.
 
-        // 6. Display the budget on the UI.
+        if (input.description !== "" && !isNaN(input.value) && input.value > 0) {
+            // 2. Add the item to the budget controller.
+            var newItem = budgetController.addItem(input.type, input.description, input.value);
+            // 3. Add the item to the UI.
+            UICtrl.addListItem(newItem, input.type);
+            // 4.Clear the fields
+            UICtrl.clearFields();
+            // 5. Calculate and update budget
+            updateBudget();
+        }
     };
-    //Initialisation function to show the console the application has successfully loaded.
     return {
         init: function () {
             console.log("Application has started.");
             setupEventListeners();
         },
     };
-})(budgetController, UIController); //Passing the two modules into the IIFE so they can be used as arguments on the inner functions.
+    //Initialisation function to show the console the application has successfully loaded.
+
+})(budgetController, UIController); //Passing the two modules into the IIFE so they can be used as arguments on the inner functions.;
+
 
 //Initialisation function to activate the data input fields event listeners. Keeping them all within one function helps keep the code tidier.
 controller.init();
