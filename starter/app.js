@@ -13,7 +13,14 @@ var budgetController = (function () {
         this.description = description;
         this.value = value;
     };
-
+    //A function to calculate the total of all of the entries for both incomes and expenses.
+    var calculateTotal = function (type) {
+        var sum = 0;
+        data.allItems[type].forEach(function (cur) {
+            sum += cur.value;
+        });
+        data.totals[type] = sum;
+    }
     //Instead of making many variables to keep track of each...well, variable, it's better to store them all in one object, just like with the DOMstrings.
     //An array would be the ideal data structure for the objects created by the above function constructors.
     var data = {
@@ -25,6 +32,8 @@ var budgetController = (function () {
             exp: 0,
             inc: 0,
         },
+        budget: 0,
+        percentage: -1,
     };
 
     return {
@@ -50,10 +59,36 @@ var budgetController = (function () {
             //Return the new item.
             return newItem;
         },
+        //Function to calculate the available budget and to calculate the percentage of the budget that has been used.
+        calculateBudget: function () {
+            //Calculat total income and expenses
+            calculateTotal("exp");
+            calculateTotal("inc");
+
+            //Calculate the budget: income - expenses
+            data.budget = data.totals.inc - data.totals.exp;
+            //Calculate the percentage of income that we spent. We only want this to run when we actually have a budget, hence the if statement.
+            if (data.totals.inc > 1) {
+                data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+            } else {
+                data.percentage = -1;
+            }
+        },
+        //returns all of the budget information in an object.
+        getBudget: function () {
+            return {
+                budget: data.budget,
+                totalInc: data.totals.inc,
+                totalExp: data.totals.exp,
+                percentage: data.percentage,
+            }
+        },
+        //Quick function display data entered from the UI.
         testing: function () {
             console.log(data);
         },
     };
+
 })();
 
 //UI CONTROLLER
@@ -73,10 +108,10 @@ var UIController = (function () {
             return {
                 type: document.querySelector(DOMstrings.inputType).value, //Value will be inc for income, or exp for expense.
                 description: document.querySelector(DOMstrings.inputDescription).value, //Input for description of whatever expense/income.
-                value: parseFloat(document.querySelector(DOMstrings.inputValue).value), //The actual monetary value of the expense/income.
+                value: parseFloat(document.querySelector(DOMstrings.inputValue).value), //The actual monetary value of the expense/income. parseFloat converts string to floating number.
             };
         },
-
+        //Function to update the UI when a new item is added to the budget.
         addListItem: function (obj, type) {
             var html, newHtml, element;
 
@@ -138,8 +173,11 @@ var controller = (function (budgetCtrl, UICtrl) {
 
     var updateBudget = function () {
         // 1. Calculate the budget.
+        budgetCtrl.calculateBudget();
         // 2. Returns the budget
+        var budget = budgetCtrl.getBudget();
         // 3. Display the budget on the UI.
+        console.log(budget);
     };
 
     //ctrlAddItem function adds the item in the input field onto the budgetting app.
@@ -159,6 +197,7 @@ var controller = (function (budgetCtrl, UICtrl) {
             updateBudget();
         }
     };
+    //A test initialisation function to ensure it's all loaded. To be called at the end of the code.
     return {
         init: function () {
             console.log("Application has started.");
