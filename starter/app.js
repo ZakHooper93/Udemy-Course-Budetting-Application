@@ -206,7 +206,7 @@ var controller = (function (budgetCtrl, UICtrl) {
     };
     //Initialisation function to show the console the application has successfully loaded.
 
-})(budgetController, UIController); //Passing the two modules into the IIFE so they can be used as arguments on the inner functions.;
+})(budgetController, UIController); //Passing the two modules into the IIFE so they can be used as arguments on the inner functions.
 
 
 //Initialisation function to activate the data input fields event listeners. Keeping them all within one function helps keep the code tidier.
