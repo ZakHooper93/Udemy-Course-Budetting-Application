@@ -59,6 +59,19 @@ var budgetController = (function () {
             //Return the new item.
             return newItem;
         },
+
+        deleteItem: function (type, id) {
+            var ids, index;
+            ids = data.allItems[type].map(function (current) {
+                return current.id;
+            })
+            index = ids.indexOf(id);
+
+            if (index !== -1) {
+                data.allItems[type].splice(index, 1)
+            }
+        },
+
         //Function to calculate the available budget and to calculate the percentage of the budget that has been used.
         calculateBudget: function () {
             //Calculat total income and expenses
@@ -140,19 +153,22 @@ var UIController = (function () {
             //Insert the HTML into the DOM
             document.querySelector(element).insertAdjacentHTML("beforeend", newHtml);
         },
-        //A function to clear the fields once an entry has been made.
+        //A function to clear the input fields once an entry has been made.
         clearFields: function () {
             var fields;
             fields = document.querySelectorAll(DOMstrings.inputDescription + "," + DOMstrings.inputValue);
             var fieldsArr = Array.prototype.slice.call(fields); //Use the slice method to...I don't really know how this works, need to look into it some more.
+
             //A new loop I haven't used yet, forEach. It works for every item in the given array.
             //Used to replace the description and value back to an empty form and to focus back on the first input box (description)
             fieldsArr.forEach(function (current, index, array) {
                 current.value = "";
             });
+            //Focus back on the description field after entering an entry.
             fieldsArr[0].focus();
         },
 
+        //Displays the total budget, incomes and expenses in the UI, with additional if/else statement to only show percentage if it > 0, or else it looks weird.
         displayBudget: function (obj) {
             document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
             document.querySelector(DOMstrings.incomeLabel).textContent = obj.totalInc;
@@ -188,6 +204,7 @@ var controller = (function (budgetCtrl, UICtrl) {
             }
         });
 
+        //Added an event listener to run the ctrlDeleteItem function on click, when the DOM.container is clicked. This is the delete button on the UI.
         document.querySelector(DOM.container).addEventListener("click", ctrlDeleteItem)
     };
 
@@ -217,18 +234,22 @@ var controller = (function (budgetCtrl, UICtrl) {
             updateBudget();
         }
     };
-
+    //Function to remove an item from the budget and reflect the changed in the UI.
     var ctrlDeleteItem = function (event) {
         var itemID, splitID, type, ID;
+
+        //Selecting the correct DOM using DOM traversal. Might not be the best way of doing this but it's ok for now.
         itemID = (event.target.parentNode.parentNode.parentNode.parentNode.id)
 
+        //Splitting the ID of the budgetting entry container into an array, using "-" as a "splitting point".
+        //This allows us to seperate the string into different usable parts.
         if (itemID) {
             splitID = itemID.split("-");
             type = splitID[0]
-            ID = splitID[1];
+            ID = parseInt(splitID[1]); //Need to parseInt to convert the string to a workable integer in the array, otherwise it just won't work.
 
             //1. Delete item from the data structure.
-
+            budgetCtrl.deleteItem(type, ID);
             //2. Delete the item from the user interface.
 
             //3. Update and show the new budget.
