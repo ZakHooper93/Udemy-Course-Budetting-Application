@@ -24,6 +24,7 @@ var budgetController = (function () {
         this.description = description;
         this.value = value;
     };
+
     //A function to calculate the total of all of the entries for both incomes and expenses.
     var calculateTotal = function (type) {
         var sum = 0;
@@ -32,6 +33,7 @@ var budgetController = (function () {
         });
         data.totals[type] = sum;
     }
+
     //Instead of making many variables to keep track of each...well, variable, it's better to store them all in one object, just like with the DOMstrings.
     //An array would be the ideal data structure for the objects created by the above function constructors.
     var data = {
@@ -50,6 +52,7 @@ var budgetController = (function () {
     return {
         addItem: function (type, des, val) {
             var newItem;
+
             //Create a new unique ID for each entry. This particular declaration ensures no duplicates are created when items are removed from the array, which may be the case if we based ID's purely
             //on the array length.
             if (data.allItems[type].length > 0) {
@@ -57,6 +60,7 @@ var budgetController = (function () {
             } else {
                 ID = 0;
             }
+
             //Create a new instance based on the input type + or - in the UI.
             if (type === "exp") {
                 newItem = new Expense(ID, des, val);
@@ -73,9 +77,11 @@ var budgetController = (function () {
 
         deleteItem: function (type, id) {
             var ids, index;
+
             ids = data.allItems[type].map(function (current) {
                 return current.id;
             })
+
             index = ids.indexOf(id);
 
             if (index !== -1) {
@@ -91,6 +97,7 @@ var budgetController = (function () {
 
             //Calculate the budget: income - expenses
             data.budget = data.totals.inc - data.totals.exp;
+
             //Calculate the percentage of income that we spent. We only want this to run when we actually have a budget, hence the if statement.
             if (data.totals.inc > 0) {
                 data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
@@ -104,12 +111,15 @@ var budgetController = (function () {
                 cur.calcPercentage(data.totals.inc);
             })
         },
+
         getPercentage: function () {
             var allPerc = data.allItems.exp.map(function (cur) {
                 return cur.getPercentage();
             })
+
             return allPerc;
         },
+
         //returns all of the budget information in an object.
         getBudget: function () {
             return {
@@ -119,6 +129,7 @@ var budgetController = (function () {
                 percentage: data.percentage,
             }
         },
+
         //Quick function displays data entered from the UI.
         testing: function () {
             console.log(data);
@@ -143,8 +154,9 @@ var UIController = (function () {
         percentageLabel: ".budget__expenses--percentage",
         container: ".container",
         expensesPercLabel: ".item__percentage",
-
+        dateLabel: ".budget__title--month",
     };
+
     return {
         //This function obtains the data from the three fields of the budgetting app. It uses a reference to the DOMstrings object instead of hardcoding (DRY).
         getinput: function () {
@@ -154,6 +166,7 @@ var UIController = (function () {
                 value: parseFloat(document.querySelector(DOMstrings.inputValue).value), //The actual monetary value of the expense/income. parseFloat converts string to floating number.
             };
         },
+
         //Function to update the UI when a new item is added to the budget.
         addListItem: function (obj, type) {
             var html, newHtml, element;
@@ -172,7 +185,7 @@ var UIController = (function () {
             //Replace the placeholder text with some actual data using the replace method.
             newHtml = html.replace("%id%", obj.id);
             newHtml = newHtml.replace("%description%", obj.description);
-            newHtml = newHtml.replace("%value%", obj.value);
+            newHtml = newHtml.replace("%value%", this.formatNumber(obj.value, type));
 
             //Insert the HTML into the DOM
             document.querySelector(element).insertAdjacentHTML("beforeend", newHtml);
@@ -181,11 +194,12 @@ var UIController = (function () {
         deleteListItem: function (selectorID) {
             var el = document.getElementById(selectorID)
             el.parentNode.removeChild(el)
-
         },
+
         //A function to clear the input fields once an entry has been made.
         clearFields: function () {
             var fields;
+
             fields = document.querySelectorAll(DOMstrings.inputDescription + "," + DOMstrings.inputValue);
             var fieldsArr = Array.prototype.slice.call(fields); //Use the slice method to...I don't really know how this works, need to look into it some more.
 
@@ -194,16 +208,17 @@ var UIController = (function () {
             fieldsArr.forEach(function (current, index, array) {
                 current.value = "";
             });
+
             //Focus back on the description field after entering an entry.
             fieldsArr[0].focus();
         },
 
         //Displays the total budget, incomes and expenses in the UI, with additional if/else statement to only show percentage if it > 0, or else it looks weird.
         displayBudget: function (obj) {
-            document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
-            document.querySelector(DOMstrings.incomeLabel).textContent = obj.totalInc;
-            document.querySelector(DOMstrings.expenseLabel).textContent = obj.totalExp;
-
+            obj.budget > 0 ? type = "inc" : type = "exp";
+            document.querySelector(DOMstrings.budgetLabel).textContent = this.formatNumber(obj.budget, type);
+            document.querySelector(DOMstrings.incomeLabel).textContent = this.formatNumber(obj.totalInc, "inc");
+            document.querySelector(DOMstrings.expenseLabel).textContent = this.formatNumber(obj.totalExp, "exp");
 
             if (obj.percentage > 0) {
                 document.querySelector(DOMstrings.percentageLabel).textContent = obj.percentage + "%";
@@ -229,6 +244,39 @@ var UIController = (function () {
                 }
             })
         },
+
+        formatNumber: function (num, type) {
+            var numSplit, int, dec;
+
+            num = Math.abs(num); // Math.abs returns the absolute value of a number. This means no negative numbers.
+            num = num.toFixed(2); // num.toFixed() limits number to 2 decimal places. Handy for currencies.
+            numSplit = num.split(".");
+            int = numSplit[0];
+            dec = numSplit[1];
+            if (int.length > 3) {
+                int = int.substr(0, (int.length - 3)) + "," + int.substr((int.length - 3), 3); //e.g 2310, output = 2,310
+            }
+            return (type === "exp" ? sign = "-" : sign = "+") + " " + int + "." + dec;
+        },
+
+        displayMonth: function () {
+            var now, year, month, months
+            var now = new Date()
+            console.log(now);
+            months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+            month = months[now.getMonth()];
+            year = now.getFullYear();
+            document.querySelector(DOMstrings.dateLabel).textContent = month + " " + year;
+        },
+
+        changedType: function () {
+            var fields = document.querySelectorAll(
+                DOMstrings.inputType + "," +
+                DOMstrings.inputDescription + "," +
+                DOMstrings.inputValue
+            );
+        },
+
         //Simple function to return the DOMstrings object into the global scope so that it can be used by other controllers.
         getDOMstrings: function () {
             return DOMstrings;
@@ -242,6 +290,7 @@ var controller = (function (budgetCtrl, UICtrl) {
     var setupEventListeners = function () {
         //Access the previously returned DOMstrings by assigning it to a new variable in this scope. Next time don't forget to actually call the function! I forgot the ()!
         var DOM = UICtrl.getDOMstrings();
+
         //Adding an even listener for the add button, to run the function ctrlAddItem on click.
         document.querySelector(DOM.inputButton).addEventListener("click", ctrlAddItem);
 
@@ -253,14 +302,19 @@ var controller = (function (budgetCtrl, UICtrl) {
         });
 
         //Added an event listener to run the ctrlDeleteItem function on click, when the DOM.container is clicked. This is the delete button on the UI.
-        document.querySelector(DOM.container).addEventListener("click", ctrlDeleteItem)
+        document.querySelector(DOM.container).addEventListener("click", ctrlDeleteItem);
+
+        document.querySelector(DOM.inputType).addEventListener("change", UICtrl.changedType);
     };
 
     var updateBudget = function () {
+
         // 1. Calculate the budget.
         budgetCtrl.calculateBudget();
+
         // 2. Returns the budget
         var budget = budgetCtrl.getBudget();
+
         // 3. Display the budget on the UI.
         UICtrl.displayBudget(budget);
     };
@@ -274,11 +328,12 @@ var controller = (function (budgetCtrl, UICtrl) {
 
         //3. Update the UI with the new percentages.
         UICtrl.displayPercentages(percentages);
-    }
+    };
 
     //ctrlAddItem function adds the item in the input field onto the budgetting app.
     var ctrlAddItem = function () {
         var input, newItem;
+
         // 1. Get the field input data.
         var input = UICtrl.getinput();
 
@@ -286,17 +341,22 @@ var controller = (function (budgetCtrl, UICtrl) {
         if (input.description !== "" && !isNaN(input.value) && input.value > 0) {
             // 2. Add the item to the budget controller.
             var newItem = budgetController.addItem(input.type, input.description, input.value);
+
             // 3. Add the item to the UI.
             UICtrl.addListItem(newItem, input.type);
+
             // 4.Clear the fields
             UICtrl.clearFields();
+
             // 5. Calculate and update budget
             updateBudget();
+
             // 6. Calculate and update percentages
             updatePercentages();
         }
     };
-    //Function to remove an item from the budget and reflect the changed in the UI.
+
+    //Function to remove an item from the budget and reflect the changes in the UI.
     var ctrlDeleteItem = function (event) {
         var itemID, splitID, type, ID;
 
@@ -312,15 +372,18 @@ var controller = (function (budgetCtrl, UICtrl) {
 
             //1. Delete item from the data structure.
             budgetCtrl.deleteItem(type, ID);
+
             //2. Delete the item from the user interface.
             UICtrl.deleteListItem(itemID);
+
             //3. Update and show the new budget.
             updateBudget()
+
             //4. Calculate and update percentages
             updatePercentages();
-
         }
-    }
+    };
+
     //A test initialisation function to ensure it's all loaded. To be called at the end of the code.
     return {
         init: function () {
@@ -332,6 +395,7 @@ var controller = (function (budgetCtrl, UICtrl) {
                 percentage: 0,
             });
             setupEventListeners();
+            UICtrl.displayMonth();
         }
     };
     //Initialisation function to show the console the application has successfully loaded.
