@@ -141,7 +141,8 @@ var UIController = (function () {
         incomeLabel: ".budget__income--value",
         expenseLabel: ".budget__expenses--value",
         percentageLabel: ".budget__expenses--percentage",
-        container: ".container"
+        container: ".container",
+        expensesPercLabel: ".item__percentage",
 
     };
     return {
@@ -210,6 +211,24 @@ var UIController = (function () {
                 document.querySelector(DOMstrings.percentageLabel).textContent = "---";
             }
         },
+
+        displayPercentages: function (percentages) {
+            var fields = document.querySelectorAll(DOMstrings.expensesPercLabel);
+
+            var nodeListForEach = function (list, callback) {
+                for (var i = 0; i < list.length; i++) {
+                    callback(list[i], i)
+                }
+            }
+
+            nodeListForEach(fields, function (current, index) {
+                if (percentages[index] > 0) {
+                    current.textContent = percentages[index] + "%";
+                } else {
+                    current.text = "---";
+                }
+            })
+        },
         //Simple function to return the DOMstrings object into the global scope so that it can be used by other controllers.
         getDOMstrings: function () {
             return DOMstrings;
@@ -254,7 +273,7 @@ var controller = (function (budgetCtrl, UICtrl) {
         var percentages = budgetCtrl.getPercentage();
 
         //3. Update the UI with the new percentages.
-        console.log(percentages);
+        UICtrl.displayPercentages(percentages);
     }
 
     //ctrlAddItem function adds the item in the input field onto the budgetting app.
@@ -263,6 +282,7 @@ var controller = (function (budgetCtrl, UICtrl) {
         // 1. Get the field input data.
         var input = UICtrl.getinput();
 
+        //isNaN is a built in function that detects if the argument given is NaN. In this case we use it to ensure the buget entry is valid.
         if (input.description !== "" && !isNaN(input.value) && input.value > 0) {
             // 2. Add the item to the budget controller.
             var newItem = budgetController.addItem(input.type, input.description, input.value);
